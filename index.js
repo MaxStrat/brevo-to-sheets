@@ -36,10 +36,10 @@ app.post('/webhook', async (req, res) => {
     const phone = rawPhone ? `'${rawPhone}` : '';
     const classe = attrs.CLASSE || attrs.CLASS || '';
 
-    // Champs custom = tout sauf les champs déjà capturés dans les colonnes
+    // Champs custom = tout sauf les champs déjà capturés dans les colonnes et les LIVE_*
     const standardFields = new Set(['FIRSTNAME', 'PRENOM', 'LASTNAME', 'NOM', 'SMS', 'EMAIL', 'PHONE', 'TEL', 'WHATSAPP', 'CLASSE', 'CLASS', 'OPT_IN', 'DOUBLE_OPT_IN']);
     const customParts = Object.entries(attrs)
-      .filter(([key]) => !standardFields.has(key.toUpperCase()))
+      .filter(([key]) => !standardFields.has(key.toUpperCase()) && !key.toUpperCase().startsWith('LIVE_'))
       .map(([key, val]) => `${key}: ${val}`);
 
     const customFields = customParts.join(' | ');
