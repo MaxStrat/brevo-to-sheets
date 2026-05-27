@@ -19,9 +19,10 @@ async function getSheetsClient() {
   return google.sheets({ version: 'v4', auth: client });
 }
 
-// Brevo webhook
+// Brevo webhook — accepte ?canal=Meta, ?canal=Organique, ?canal=Mail
 app.post('/webhook', async (req, res) => {
   const payload = req.body;
+  const canal = req.query.canal || '';
   console.log('--- Webhook reçu ---');
   console.log(JSON.stringify(payload, null, 2));
 
@@ -33,22 +34,24 @@ app.post('/webhook', async (req, res) => {
     const email = payload.email || payload.EMAIL || attrs.EMAIL || '';
     const rawPhone = attrs.TEL || attrs.SMS || attrs.PHONE || payload.TEL || payload.SMS || payload.PHONE || '';
     const phone = rawPhone ? `'${rawPhone}` : '';
+    const classe = attrs.CLASSE || attrs.CLASS || '';
 
-    // Tous les champs custom (tout sauf les champs standards)
-    const standardFields = new Set(['FIRSTNAME', 'LASTNAME', 'SMS', 'EMAIL', 'PHONE', 'OPT_IN', 'DOUBLE_OPT_IN']);
+    // Champs custom = tout sauf les champs déjà capturés dans les colonnes
+    const standardFields = new Set(['FIRSTNAME', 'PRENOM', 'LASTNAME', 'NOM', 'SMS', 'EMAIL', 'PHONE', 'TEL', 'WHATSAPP', 'CLASSE', 'CLASS', 'OPT_IN', 'DOUBLE_OPT_IN']);
     const customParts = Object.entries(attrs)
       .filter(([key]) => !standardFields.has(key.toUpperCase()))
       .map(([key, val]) => `${key}: ${val}`);
 
     const customFields = customParts.join(' | ');
 
-    const row = [date, firstName, email, phone, customFields];
+    // Ordre des colonnes : Prénom | mail | tel | canal | date inscription | Classe | champs custom
+    const row = [firstName, email, phone, canal, date, classe, customFields];
     console.log('Ligne à écrire:', row);
 
     const sheets = await getSheetsClient();
     await sheets.spreadsheets.values.append({
       spreadsheetId: SPREADSHEET_ID,
-      range: `${SHEET_NAME}!A:E`,
+      range: `${SHEET_NAME}!A:G`,
       valueInputOption: 'USER_ENTERED',
       requestBody: { values: [row] },
     });
