@@ -29,9 +29,10 @@ app.post('/webhook', async (req, res) => {
     const attrs = payload.attributes || payload.ATTRIBUTES || {};
 
     const date = new Date().toLocaleString('fr-FR', { timeZone: 'Europe/Paris' });
-    const firstName = attrs.FIRSTNAME || payload.FIRSTNAME || '';
+    const firstName = attrs.PRENOM || attrs.FIRSTNAME || payload.PRENOM || payload.FIRSTNAME || '';
     const email = payload.email || payload.EMAIL || attrs.EMAIL || '';
-    const phone = attrs.SMS || attrs.PHONE || payload.SMS || payload.PHONE || '';
+    const rawPhone = attrs.TEL || attrs.SMS || attrs.PHONE || payload.TEL || payload.SMS || payload.PHONE || '';
+    const phone = rawPhone ? `'${rawPhone}` : '';
 
     // Tous les champs custom (tout sauf les champs standards)
     const standardFields = new Set(['FIRSTNAME', 'LASTNAME', 'SMS', 'EMAIL', 'PHONE', 'OPT_IN', 'DOUBLE_OPT_IN']);
