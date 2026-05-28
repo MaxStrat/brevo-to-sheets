@@ -9,6 +9,13 @@ const PORT = process.env.PORT || 3000;
 const SPREADSHEET_ID = process.env.SPREADSHEET_ID;
 const SHEET_NAME = process.env.SHEET_NAME || 'Feuille1';
 
+// File d'attente pour éviter les collisions d'écriture simultanées
+let writeQueue = Promise.resolve();
+function enqueue(fn) {
+  writeQueue = writeQueue.then(fn).catch(err => console.error('Erreur queue:', err.message));
+  return writeQueue;
+}
+
 async function getSheetsClient() {
   const credentials = JSON.parse(process.env.GOOGLE_SERVICE_ACCOUNT_JSON);
   const auth = new google.auth.GoogleAuth({
@@ -49,12 +56,12 @@ app.post('/webhook', async (req, res) => {
     console.log('Ligne à écrire:', row);
 
     const sheets = await getSheetsClient();
-    await sheets.spreadsheets.values.append({
+    await enqueue(() => sheets.spreadsheets.values.append({
       spreadsheetId: SPREADSHEET_ID,
       range: `${SHEET_NAME}!A:G`,
       valueInputOption: 'USER_ENTERED',
       requestBody: { values: [row] },
-    });
+    }));
 
     console.log('OK - Données enregistrées dans Google Sheets');
     res.status(200).json({ success: true });
