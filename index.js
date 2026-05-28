@@ -39,7 +39,7 @@ app.post('/webhook', async (req, res) => {
     // Champs custom = tout sauf les champs déjà capturés dans les colonnes et les LIVE_*
     const standardFields = new Set(['FIRSTNAME', 'PRENOM', 'LASTNAME', 'NOM', 'SMS', 'EMAIL', 'PHONE', 'TEL', 'WHATSAPP', 'CLASSE', 'CLASS', 'OPT_IN', 'DOUBLE_OPT_IN']);
     const customParts = Object.entries(attrs)
-      .filter(([key]) => !standardFields.has(key.toUpperCase()) && !key.toUpperCase().startsWith('LIVE_'))
+      .filter(([key]) => !standardFields.has(key.toUpperCase()) && !key.toUpperCase().startsWith('LIVE_') && !key.toUpperCase().startsWith('WEBINAR'))
       .map(([key, val]) => `${key}: ${val}`);
 
     const customFields = customParts.join(' | ');
