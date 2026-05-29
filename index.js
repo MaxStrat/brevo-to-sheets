@@ -55,16 +55,21 @@ app.post('/webhook', async (req, res) => {
     const row = [firstName, email, phone, canal, date, classe, customFields];
     console.log('Ligne à écrire:', row);
 
-    const sheets = await getSheetsClient();
-    await enqueue(() => sheets.spreadsheets.values.append({
-      spreadsheetId: SPREADSHEET_ID,
-      range: `${SHEET_NAME}!A:G`,
-      valueInputOption: 'USER_ENTERED',
-      requestBody: { values: [row] },
-    }));
-
-    console.log('OK - Données enregistrées dans Google Sheets');
+    // Répondre immédiatement à Brevo pour éviter les retries
     res.status(200).json({ success: true });
+
+    // Écriture en arrière-plan via la file d'attente
+    enqueue(async () => {
+      const sheets = await getSheetsClient();
+      await sheets.spreadsheets.values.append({
+        spreadsheetId: SPREADSHEET_ID,
+        range: `${SHEET_NAME}!A:G`,
+        valueInputOption: 'USER_ENTERED',
+        requestBody: { values: [row] },
+      });
+      console.log('OK - Données enregistrées dans Google Sheets');
+    });
+
   } catch (err) {
     console.error('ERREUR:', err.message);
     res.status(500).json({ error: err.message });
